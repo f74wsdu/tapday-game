@@ -69,12 +69,11 @@
   cursor:pointer;
   user-select:none;
 ">
-  Upgrade (+1) — 20 💰
-</div>
+  upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
 
 <script>
-  let score = parseInt(localStorage.getItem("score")) || 0;
   let power = parseInt(localStorage.getItem("power")) || 1;
+let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
 
   let maxEnergy = 100;
   let energy = parseInt(localStorage.getItem("energy"));
@@ -105,7 +104,7 @@
     updateUI();
   });
 
-  upgradeEl.addEventListener("pointerdown", () => {
+  upgradeEl.aEventListener("pointerdown", () => {
     if (score >= 20) {
       score -= 20;
       power += 1;
