@@ -42,18 +42,22 @@
 <div id="score">0</div>
 
 <script>
-  let score = localStorage.getItem("score");
-  score = score ? parseInt(score) : 0;
+  document.addEventListener("DOMContentLoaded", () => {
 
-  const scoreEl = document.getElementById("score");
-  scoreEl.textContent = score;
+    let score = localStorage.getItem("score");
+    score = score ? parseInt(score) : 0;
 
-  const tapBtn = document.getElementById("tap");
+    const scoreEl = document.getElementById("score");
+    const tapEl = document.getElementById("tap");
 
-  tapBtn.addEventListener("click", () => {
-    score++;
     scoreEl.textContent = score;
-    localStorage.setItem("score", score);
+
+    tapEl.addEventListener("click", () => {
+      score++;
+      scoreEl.textContent = score;
+      localStorage.setItem("score", score);
+    });
+
   });
 </script>
 
