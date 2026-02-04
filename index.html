@@ -127,4 +127,23 @@
 </script>
 
 </body>
+<script>
+let score = 0;
+let power = 1;
+let energy = 100;
+
+const scoreEl = document.getElementById("score");
+const tapEl = document.getElementById("tap");
+
+scoreEl.textContent = score;
+
+tapEl.addEventListener("click", () => {
+  if (energy <= 0) return;
+
+  score += power;
+  energy--;
+
+  scoreEl.textContent = score;
+});
+</script>
 </html>
