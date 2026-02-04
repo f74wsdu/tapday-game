@@ -41,7 +41,10 @@
 <div id="tap">TAP</div>
 <div id="score">0</div>
 
-<div id="upgrade" style="
+<div id="power" style="margin-top:10px;font-size:18px;">
+  Сила тапу: 1
+</div>
+  <div id="upgrade" style="
   margin-top:20px;
   padding:12px 20px;
   background:#2196f3;
@@ -60,10 +63,12 @@
   power = power ? parseInt(power) : 1;
 
   const scoreEl = document.getElementById("score");
+  const powerEl = document.getElementById("power");
   const tapEl = document.getElementById("tap");
   const upgradeEl = document.getElementById("upgrade");
 
   scoreEl.textContent = score;
+  powerEl.textContent = "Сила тапу: " + power;
 
   tapEl.addEventListener("pointerdown", () => {
     score += power;
@@ -77,12 +82,11 @@
       power += 1;
 
       scoreEl.textContent = score;
+      powerEl.textContent = "Сила тапу: " + power;
       upgradeEl.textContent = `Upgrade (+${power}) — 20 💰`;
 
       localStorage.setItem("score", score);
       localStorage.setItem("power", power);
-    } else {
-      alert("Недостатньо монет");
     }
   });
 
