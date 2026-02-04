@@ -52,11 +52,13 @@ h1 { margin-bottom: 10px; }
   cursor: pointer;
   user-select: none;
   font-size: 15px;
+  text-align: center;
 }
 
 .blue { background:#2196f3; }
 .green { background:#4caf50; }
 .gold { background:#ff9800; }
+.purple { background:#9c27b0; }
 </style>
 </head>
 
@@ -75,6 +77,10 @@ h1 { margin-bottom: 10px; }
 <div id="buyIncome" class="btn green"></div>
 <div id="daily" class="btn gold"></div>
 
+<div id="donate" class="btn purple">
+  💎 Купити 1000 монет — 19 ⭐
+</div>
+
 <script>
 // ===== TELEGRAM INIT =====
 const tg = window.Telegram?.WebApp;
@@ -83,12 +89,12 @@ if (tg) {
   tg.expand();
 }
 
-// ===== USER (під бекенд) =====
+// ===== DONATE BOT =====
+const DONATE_BOT = "tapday_777_bot"; // ← ТУТ ТІЛЬКИ ЦЕ, ЯК ТРЕБА
+
+// ===== USER =====
 const user = tg?.initDataUnsafe?.user || {};
 const userId = user.id || "guest";
-const username = user.username || "guest";
-
-console.log("USER:", userId, username);
 
 // ===== STATE =====
 let score = +localStorage.getItem("score") || 0;
@@ -113,6 +119,7 @@ const incomeEl = document.getElementById("income");
 const upgradeEl = document.getElementById("upgrade");
 const buyIncomeEl = document.getElementById("buyIncome");
 const dailyEl = document.getElementById("daily");
+const donateEl = document.getElementById("donate");
 
 // ===== HAPTIC =====
 function vibrate(type="light") {
@@ -146,7 +153,7 @@ function updateUI() {
   upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
   buyIncomeEl.textContent = `Дохід (+1 / сек) — ${incomeCost} 💰`;
 
-  const canDaily = Date.now() - lastDaily > 24*60*60*1000;
+  const canDaily = Date.now() - lastDaily > 86400000;
   dailyEl.textContent = canDaily ? "🎁 Daily бонус (+100)" : "⏳ Daily завтра";
   dailyEl.style.opacity = canDaily ? "1" : "0.5";
 }
@@ -154,9 +161,9 @@ function updateUI() {
 updateUI();
 
 // ===== OFFLINE INCOME =====
-const offlineSeconds = Math.floor((Date.now() - lastOnline)/1000);
-if (offlineSeconds > 5 && income > 0) {
-  const reward = offlineSeconds * income;
+const offlineSec = Math.floor((Date.now() - lastOnline) / 1000);
+if (offlineSec > 10 && income > 0) {
+  const reward = offlineSec * income;
   score += reward;
   alert(`💤 Offline бонус: +${reward} монет`);
 }
@@ -195,12 +202,20 @@ buyIncomeEl.addEventListener("pointerdown", () => {
 
 // ===== DAILY =====
 dailyEl.addEventListener("pointerdown", () => {
-  if (Date.now() - lastDaily < 24*60*60*1000) return;
+  if (Date.now() - lastDaily < 86400000) return;
   score += 100;
   lastDaily = Date.now();
   vibrate("heavy");
   save();
   updateUI();
+});
+
+// ===== DONATE =====
+donateEl.addEventListener("pointerdown", () => {
+  vibrate("heavy");
+  if (tg) {
+    tg.openTelegramLink(`https://t.me/${DONATE_BOT}`);
+  }
 });
 
 // ===== ENERGY REGEN =====
