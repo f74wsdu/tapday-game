@@ -77,14 +77,18 @@ h1 { margin-bottom: 12px; }
 
 <div id="upgrade" class="btn blue"></div>
 <div id="buyIncome" class="btn green"></div>
-<div id="donate" class="btn gold">⚡ Купити 1000 монет (⭐ 50)</div>
+
+<!-- REAL DONATE BUTTON -->
+<div id="donate" class="btn gold">
+  ⭐ Купити 1000 монет (19 Stars)
+</div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-// ===== STATE =====
+// ===== GAME STATE =====
 let score = +localStorage.getItem("score") || 0;
 let power = +localStorage.getItem("power") || 1;
 let income = +localStorage.getItem("income") || 0;
@@ -177,23 +181,10 @@ setInterval(() => {
   }
 }, 3000);
 
-// ===== FAKE DONATE =====
+// ===== REAL DONATE → BOT =====
 donateEl.addEventListener("click", () => {
-  tg.showPopup({
-    title: "Підтвердження",
-    message: "Купити 1000 монет за ⭐ 50?",
-    buttons: [
-      { id: "buy", type: "default", text: "Купити" },
-      { type: "cancel" }
-    ]
-  }, (btnId) => {
-    if (btnId === "buy") {
-      score += 1000;
-      tg.HapticFeedback.notificationOccurred("success");
-      save();
-      updateUI();
-    }
-  });
+  tg.HapticFeedback.impactOccurred("heavy");
+  tg.openTelegramLink("https://t.me/tapday_777_bot?start=donate_1000");
 });
 </script>
 
