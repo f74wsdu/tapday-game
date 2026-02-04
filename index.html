@@ -1,59 +1,61 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<title>TapDay</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>TapDay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  background: #0f1220;
-  color: white;
-  font-family: Arial, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-}
+  <style>
+    body {
+      margin: 0;
+      background: #0f1220;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
 
-h1 { margin-bottom: 10px; }
+    h1 { margin-bottom: 10px; }
 
-#tap {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff9800, #ff5722);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32px;
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.1s;
-}
+    #tap {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff9800, #ff5722);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.05s;
+    }
 
-#tap:active {
-  transform: scale(0.95);
-}
+    #tap:active {
+      transform: scale(0.95);
+    }
 
-.stat {
-  margin-top: 8px;
-  font-size: 18px;
-}
+    .info {
+      margin-top: 10px;
+      font-size: 18px;
+    }
 
-.btn {
-  margin-top: 15px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  cursor: pointer;
-  user-select: none;
-}
+    .btn {
+      margin-top: 15px;
+      padding: 14px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 16px;
+      text-align: center;
+    }
 
-#upgrade { background:#2196f3; }
-#buyIncome { background:#4caf50; }
-</style>
+    #buyIncome { background: #4caf50; }
+    #upgrade { background: #2196f3; }
+  </style>
 </head>
 
 <body>
@@ -62,107 +64,71 @@ h1 { margin-bottom: 10px; }
 
 <div id="tap">TAP</div>
 
-<div id="score" class="stat">0 💰</div>
-<div id="energy" class="stat">Енергія: 100 / 100 ⚡</div>
-<div id="power" class="stat">Сила тапу: 1</div>
-<div id="income" class="stat">Дохід: 0 / сек 💰</div>
+<div id="score" class="info">0 💰</div>
+<div id="energy" class="info">Енергія: 100 / 100 ⚡</div>
+<div id="power" class="info">Сила тапу: 1</div>
+<div id="income" class="info">Дохід: 0 / сек 💰</div>
 
-<div id="upgrade" class="btn"></div>
 <div id="buyIncome" class="btn"></div>
+<div id="upgrade" class="btn"></div>
 
 <script>
-// ===== STATE =====
+/* ================= TELEGRAM ================= */
+const tg = window.Telegram?.WebApp;
+tg?.ready();
+
+/* ================= STATE ================= */
 let score = parseInt(localStorage.getItem("score")) || 0;
-
 let power = parseInt(localStorage.getItem("power")) || 1;
-let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
-
 let income = parseInt(localStorage.getItem("income")) || 0;
+
+let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
 let incomeCost = parseInt(localStorage.getItem("incomeCost")) || 50;
 
-let maxEnergy = 100;
+const maxEnergy = 100;
 let energy = parseInt(localStorage.getItem("energy"));
 energy = isNaN(energy) ? maxEnergy : energy;
 
-// ===== ELEMENTS =====
-const tapEl = document.getElementById("tap");
+/* ================= ELEMENTS ================= */
 const scoreEl = document.getElementById("score");
-const energyEl = document.getElementById("energy");
 const powerEl = document.getElementById("power");
 const incomeEl = document.getElementById("income");
+const energyEl = document.getElementById("energy");
+
+const tapEl = document.getElementById("tap");
 const upgradeEl = document.getElementById("upgrade");
 const buyIncomeEl = document.getElementById("buyIncome");
 
-// ===== UI =====
+/* ================= UI ================= */
 function updateUI() {
-  scoreEl.textContent = score + " 💰";
+  scoreEl.textContent = Number(score) + " 💰";
+  powerEl.textContent = "Сила тапу: " + power;
+  incomeEl.textContent = "Дохід: " + income + " / сек 💰";
   energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
-  powerEl.textContent = `Сила тапу: ${power}`;
-  incomeEl.textContent = `Дохід: ${income} / сек 💰`;
 
   upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
   buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
 }
 
-// ===== SAVE =====
-function save() {
-  localStorage.setItem("score", score);
-  localStorage.setItem("power", power);
-  localStorage.setItem("upgradeCost", upgradeCost);
-  localStorage.setItem("income", income);
-  localStorage.setItem("incomeCost", incomeCost);
-  localStorage.setItem("energy", energy);
-}
-
-// ===== TAP =====
+/* ================= TAP ================= */
 tapEl.addEventListener("pointerdown", () => {
   if (energy <= 0) return;
 
   score += power;
-  energy--;
+  energy -= 1;
 
-  navigator.vibrate?.(10);
+  tg?.HapticFeedback?.impactOccurred("light");
 
   save();
   updateUI();
 });
 
-// ===== UPGRADE POWER =====
+/* ================= UPGRADE POWER ================= */
 upgradeEl.addEventListener("pointerdown", () => {
   if (score < upgradeCost) return;
 
   score -= upgradeCost;
-  power++;
-  upgradeCost = Math.floor(upgradeCost * 1.6);
+  power += 1;
+  upgradeCost = Math.floor(upgradeCost * 1.5);
 
-  save();
-  updateUI();
-});
-
-// ===== BUY INCOME =====
-buyIncomeEl.addEventListener("pointerdown", () => {
-  if (score < incomeCost) return;
-
-  score -= incomeCost;
-  income++;
-  incomeCost = Math.floor(incomeCost * 1.7);
-
-  save();
-  updateUI();
-});
-
-// ===== TICK =====
-setInterval(() => {
-  score += income;
-  energy = Math.min(maxEnergy, energy + 1);
-
-  save();
-  updateUI();
-}, 1000);
-
-// INIT
-updateUI();
-</script>
-
-</body>
-</html>
+  tg?.HapticFeedback?.impact
