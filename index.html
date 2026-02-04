@@ -1,61 +1,60 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>TapDay</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>TapDay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      background: #0f1220;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1b1f3b, #0f1220);
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
 
-    h1 { margin-bottom: 10px; }
+h1 { margin-bottom: 20px; }
 
-    #tap {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff9800, #ff5722);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.05s;
-    }
+#tap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease;
+}
 
-    #tap:active {
-      transform: scale(0.95);
-    }
+#tap:active {
+  transform: scale(0.92);
+}
 
-    .info {
-      margin-top: 10px;
-      font-size: 18px;
-    }
+.stat {
+  margin-top: 8px;
+  font-size: 18px;
+}
 
-    .btn {
-      margin-top: 15px;
-      padding: 14px 22px;
-      border-radius: 12px;
-      cursor: pointer;
-      user-select: none;
-      font-size: 16px;
-      text-align: center;
-    }
+.button {
+  margin-top: 14px;
+  padding: 14px 24px;
+  border-radius: 14px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 18px;
+}
 
-    #buyIncome { background: #4caf50; }
-    #upgrade { background: #2196f3; }
-  </style>
+.green { background: #4caf50; }
+.blue { background: #2196f3; }
+</style>
 </head>
 
 <body>
@@ -64,20 +63,28 @@
 
 <div id="tap">TAP</div>
 
-<div id="score" class="info">0 💰</div>
-<div id="energy" class="info">Енергія: 100 / 100 ⚡</div>
-<div id="power" class="info">Сила тапу: 1</div>
-<div id="income" class="info">Дохід: 0 / сек 💰</div>
+<div class="stat" id="score">0 💰</div>
+<div class="stat" id="energy">Енергія: 100 / 100 ⚡</div>
+<div class="stat" id="power">Сила тапу: 1</div>
+<div class="stat" id="income">Дохід: 0 / сек 💰</div>
 
-<div id="buyIncome" class="btn"></div>
-<div id="upgrade" class="btn"></div>
+<div class="button green" id="buyIncome">
+Купити дохід (+1 / сек) — 50 💰
+</div>
+
+<div class="button blue" id="upgrade">
+Upgrade (+1 сила) — 20 💰
+</div>
 
 <script>
-/* ================= TELEGRAM ================= */
+/* === TELEGRAM === */
 const tg = window.Telegram?.WebApp;
 tg?.ready();
 
-/* ================= STATE ================= */
+/* === RESET ПЕРШИЙ РАЗ (МОЖЕШ ВИДАЛИТИ ПІСЛЯ ТЕСТУ) === */
+// localStorage.clear();
+
+/* === STATE === */
 let score = parseInt(localStorage.getItem("score")) || 0;
 let power = parseInt(localStorage.getItem("power")) || 1;
 let income = parseInt(localStorage.getItem("income")) || 0;
@@ -89,33 +96,41 @@ const maxEnergy = 100;
 let energy = parseInt(localStorage.getItem("energy"));
 energy = isNaN(energy) ? maxEnergy : energy;
 
-/* ================= ELEMENTS ================= */
+/* === ELEMENTS === */
+const tapEl = document.getElementById("tap");
 const scoreEl = document.getElementById("score");
+const energyEl = document.getElementById("energy");
 const powerEl = document.getElementById("power");
 const incomeEl = document.getElementById("income");
-const energyEl = document.getElementById("energy");
-
-const tapEl = document.getElementById("tap");
 const upgradeEl = document.getElementById("upgrade");
 const buyIncomeEl = document.getElementById("buyIncome");
 
-/* ================= UI ================= */
+/* === UI === */
 function updateUI() {
-  scoreEl.textContent = Number(score) + " 💰";
+  scoreEl.textContent = score + " 💰";
+  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
   powerEl.textContent = "Сила тапу: " + power;
   incomeEl.textContent = "Дохід: " + income + " / сек 💰";
-  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
-
   upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
   buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
 }
 
-/* ================= TAP ================= */
+/* === SAVE === */
+function save() {
+  localStorage.setItem("score", score);
+  localStorage.setItem("power", power);
+  localStorage.setItem("income", income);
+  localStorage.setItem("energy", energy);
+  localStorage.setItem("upgradeCost", upgradeCost);
+  localStorage.setItem("incomeCost", incomeCost);
+}
+
+/* === TAP === */
 tapEl.addEventListener("pointerdown", () => {
   if (energy <= 0) return;
 
   score += power;
-  energy -= 1;
+  energy--;
 
   tg?.HapticFeedback?.impactOccurred("light");
 
@@ -123,12 +138,54 @@ tapEl.addEventListener("pointerdown", () => {
   updateUI();
 });
 
-/* ================= UPGRADE POWER ================= */
+/* === UPGRADE POWER === */
 upgradeEl.addEventListener("pointerdown", () => {
   if (score < upgradeCost) return;
 
   score -= upgradeCost;
   power += 1;
-  upgradeCost = Math.floor(upgradeCost * 1.5);
+  upgradeCost = Math.floor(upgradeCost * 1.6);
 
-  tg?.HapticFeedback?.impact
+  tg?.HapticFeedback?.impactOccurred("medium");
+
+  save();
+  updateUI();
+});
+
+/* === BUY INCOME === */
+buyIncomeEl.addEventListener("pointerdown", () => {
+  if (score < incomeCost) return;
+
+  score -= incomeCost;
+  income += 1;
+  incomeCost = Math.floor(incomeCost * 1.7);
+
+  tg?.HapticFeedback?.impactOccurred("medium");
+
+  save();
+  updateUI();
+});
+
+/* === ENERGY REGEN === */
+setInterval(() => {
+  if (energy < maxEnergy) {
+    energy++;
+    save();
+    updateUI();
+  }
+}, 3000);
+
+/* === AUTO INCOME === */
+setInterval(() => {
+  if (income > 0) {
+    score += income;
+    save();
+    updateUI();
+  }
+}, 1000);
+
+updateUI();
+</script>
+
+</body>
+</html>
