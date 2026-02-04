@@ -32,7 +32,7 @@ h1 { margin-bottom: 15px; }
   font-weight: bold;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.1s;
+  transition: transform 0.08s ease;
 }
 
 #tap:active {
@@ -53,14 +53,14 @@ h1 { margin-bottom: 15px; }
   font-size: 16px;
 }
 
-.green { background: #4caf50; }
 .blue { background: #2196f3; }
+.green { background: #4caf50; }
 </style>
 </head>
 
 <body>
 
-<h1>TapDay Game</h1>
+<h1>TapDay</h1>
 
 <div id="tap">TAP</div>
 
@@ -73,9 +73,15 @@ h1 { margin-bottom: 15px; }
 <div id="buyIncome" class="btn green"></div>
 
 <script>
+// ===== TELEGRAM INIT =====
 const tg = window.Telegram?.WebApp;
 
-// ====== STATE ======
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+// ===== STATE =====
 let score = +localStorage.getItem("score") || 0;
 let power = +localStorage.getItem("power") || 1;
 let income = +localStorage.getItem("income") || 0;
@@ -83,11 +89,11 @@ let income = +localStorage.getItem("income") || 0;
 let upgradeCost = +localStorage.getItem("upgradeCost") || 20;
 let incomeCost = +localStorage.getItem("incomeCost") || 50;
 
-let maxEnergy = 100;
+const maxEnergy = 100;
 let energy = +localStorage.getItem("energy");
 if (isNaN(energy)) energy = maxEnergy;
 
-// ====== ELEMENTS ======
+// ===== ELEMENTS =====
 const tapEl = document.getElementById("tap");
 const scoreEl = document.getElementById("score");
 const powerEl = document.getElementById("power");
@@ -96,15 +102,18 @@ const incomeEl = document.getElementById("income");
 const upgradeEl = document.getElementById("upgrade");
 const buyIncomeEl = document.getElementById("buyIncome");
 
-// ====== HELPERS ======
+// ===== HAPTIC =====
 function vibrate(type = "light") {
-  if (tg?.HapticFeedback) {
-    tg.HapticFeedback.impactOccurred(type);
-  } else if (navigator.vibrate) {
-    navigator.vibrate(type === "light" ? 30 : 60);
-  }
+  try {
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.impactOccurred(type);
+    } else if (navigator.vibrate) {
+      navigator.vibrate(type === "light" ? 40 : 80);
+    }
+  } catch (e) {}
 }
 
+// ===== SAVE / UI =====
 function save() {
   localStorage.setItem("score", score);
   localStorage.setItem("power", power);
@@ -117,8 +126,8 @@ function save() {
 function updateUI() {
   scoreEl.textContent = score;
   powerEl.textContent = power;
-  energyEl.textContent = energy;
   incomeEl.textContent = income;
+  energyEl.textContent = energy;
 
   upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
   buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
@@ -126,24 +135,24 @@ function updateUI() {
 
 updateUI();
 
-// ====== TAP ======
+// ===== TAP =====
 tapEl.addEventListener("pointerdown", () => {
   if (energy <= 0) return;
 
   score += power;
-  energy -= 1;
+  energy--;
 
   vibrate("light");
   save();
   updateUI();
 });
 
-// ====== UPGRADE POWER ======
+// ===== UPGRADE POWER =====
 upgradeEl.addEventListener("pointerdown", () => {
   if (score < upgradeCost) return;
 
   score -= upgradeCost;
-  power += 1;
+  power++;
   upgradeCost = Math.round(upgradeCost * 1.5);
 
   vibrate("medium");
@@ -151,12 +160,12 @@ upgradeEl.addEventListener("pointerdown", () => {
   updateUI();
 });
 
-// ====== BUY INCOME ======
+// ===== BUY INCOME =====
 buyIncomeEl.addEventListener("pointerdown", () => {
   if (score < incomeCost) return;
 
   score -= incomeCost;
-  income += 1;
+  income++;
   incomeCost = Math.round(incomeCost * 1.6);
 
   vibrate("medium");
@@ -164,16 +173,16 @@ buyIncomeEl.addEventListener("pointerdown", () => {
   updateUI();
 });
 
-// ====== ENERGY REGEN ======
+// ===== ENERGY REGEN =====
 setInterval(() => {
   if (energy < maxEnergy) {
-    energy += 1;
+    energy++;
     save();
     updateUI();
   }
 }, 2000);
 
-// ====== AUTO INCOME ======
+// ===== AUTO INCOME =====
 setInterval(() => {
   if (income > 0) {
     score += income;
@@ -185,4 +194,3 @@ setInterval(() => {
 
 </body>
 </html>
-
