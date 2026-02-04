@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>TapDay</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       margin: 0;
@@ -18,181 +19,186 @@
       text-align: center;
     }
 
+    h1 { margin-bottom: 10px; }
+
     #tap {
-      width: 220px;
-      height: 220px;
+      width: 200px;
+      height: 200px;
       border-radius: 50%;
       background: linear-gradient(135deg, #ff9800, #ff5722);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
+      font-size: 32px;
       cursor: pointer;
       user-select: none;
-      transition: transform 0.08s ease;
+      transition: transform 0.05s ease;
     }
 
     #tap:active {
-      transform: scale(0.92);
+      transform: scale(0.95);
     }
 
-    .btn {
-      margin-top: 14px;
-      padding: 12px 20px;
+    .panel {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+
+    .button {
+      margin-top: 15px;
+      padding: 12px 22px;
       border-radius: 12px;
       cursor: pointer;
       user-select: none;
-      font-size: 16px;
+      font-size: 18px;
     }
 
-    .blue { background:#2196f3; }
-    .green { background:#4caf50; }
-    .gold { background:#ffcc00; color:#000; font-weight:bold; }
+    #upgrade {
+      background: #2196f3;
+    }
 
-    .stat {
-      margin-top: 8px;
-      font-size: 18px;
+    #buyIncome {
+      background: #4caf50;
+    }
+
+    #donate {
+      background: linear-gradient(135deg,#00c853,#64dd17);
     }
   </style>
 </head>
+
 <body>
 
 <h1>TapDay</h1>
 
 <div id="tap">TAP</div>
 
-<div id="score" class="stat">Монети: 0 💰</div>
-<div id="energy" class="stat">Енергія: 100 / 100 ⚡</div>
-<div id="power" class="stat">Сила тапу: 1</div>
-<div id="income" class="stat">Дохід: 0 / сек</div>
+<div id="score" class="panel">0 💰</div>
+<div id="energy" class="panel">Енергія: 100 / 100 ⚡</div>
+<div id="power" class="panel">Сила тапу: 1</div>
+<div id="income" class="panel">Дохід: 0 / сек 💰</div>
 
-<div id="upgradeTap" class="btn blue"></div>
-<div id="buyIncome" class="btn green"></div>
+<div id="upgrade" class="button">
+  Upgrade (+1 сила) — 20 💰
+</div>
 
-<div id="donate" class="btn gold">
-  💎 Купити 1000 монет (донат)
+<div id="buyIncome" class="button">
+  Купити дохід (+1 / сек) — 50 💰
+</div>
+
+<div id="donate" class="button">
+  💎 Підтримати гру (Donate)
 </div>
 
 <script>
-/* ===== TELEGRAM WEBAPP ===== */
-const tg = window.Telegram?.WebApp;
-if (tg) tg.ready();
+  // ===== ДАНІ =====
+  let score = parseInt(localStorage.getItem("score")) || 0;
+  let power = parseInt(localStorage.getItem("power")) || 1;
+  let income = parseInt(localStorage.getItem("income")) || 0;
 
-/* ===== STATE ===== */
-let score = parseInt(localStorage.getItem("score")) || 0;
-let power = parseInt(localStorage.getItem("power")) || 1;
-let income = parseInt(localStorage.getItem("income")) || 0;
+  let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
+  let incomeCost = parseInt(localStorage.getItem("incomeCost")) || 50;
 
-let energy = parseInt(localStorage.getItem("energy"));
-let maxEnergy = 100;
-energy = isNaN(energy) ? maxEnergy : energy;
+  let maxEnergy = 100;
+  let energy = parseInt(localStorage.getItem("energy"));
+  energy = isNaN(energy) ? maxEnergy : energy;
 
-let tapCost = parseInt(localStorage.getItem("tapCost")) || 20;
-let incomeCost = parseInt(localStorage.getItem("incomeCost")) || 50;
+  // ===== ЕЛЕМЕНТИ =====
+  const scoreEl = document.getElementById("score");
+  const tapEl = document.getElementById("tap");
+  const energyEl = document.getElementById("energy");
+  const powerEl = document.getElementById("power");
+  const incomeEl = document.getElementById("income");
+  const upgradeEl = document.getElementById("upgrade");
+  const buyIncomeEl = document.getElementById("buyIncome");
+  const donateEl = document.getElementById("donate");
 
-/* ===== ELEMENTS ===== */
-const tapEl = document.getElementById("tap");
-const scoreEl = document.getElementById("score");
-const energyEl = document.getElementById("energy");
-const powerEl = document.getElementById("power");
-const incomeEl = document.getElementById("income");
-const upgradeTapEl = document.getElementById("upgradeTap");
-const buyIncomeEl = document.getElementById("buyIncome");
-const donateEl = document.getElementById("donate");
-
-/* ===== UI ===== */
-function updateUI() {
-  scoreEl.textContent = `Монети: ${score} 💰`;
-  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
-  powerEl.textContent = `Сила тапу: ${power}`;
-  incomeEl.textContent = `Дохід: ${income} / сек`;
-  upgradeTapEl.textContent = `Upgrade (+1 сила) — ${tapCost} 💰`;
-  buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
-}
-
-/* ===== TAP ===== */
-tapEl.addEventListener("pointerdown", () => {
-  if (energy <= 0) return;
-
-  if (tg?.HapticFeedback) {
-    tg.HapticFeedback.impactOccurred("light");
+  function haptic() {
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.HapticFeedback.impactOccurred("light");
+    }
   }
 
-  score += power;
-  energy--;
+  function updateUI() {
+    scoreEl.textContent = score + " 💰";
+    energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
+    powerEl.textContent = "Сила тапу: " + power;
+    incomeEl.textContent = `Дохід: ${income} / сек 💰`;
 
-  save();
+    upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
+    buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
+  }
+
   updateUI();
-});
 
-/* ===== UPGRADE TAP ===== */
-upgradeTapEl.onclick = () => {
-  if (score < tapCost) return;
+  // ===== TAP =====
+  tapEl.addEventListener("pointerdown", () => {
+    if (energy <= 0) return;
 
-  score -= tapCost;
-  power++;
-  tapCost = Math.floor(tapCost * 1.6);
+    score += power;
+    energy--;
 
-  save();
-  updateUI();
-};
-
-/* ===== BUY INCOME ===== */
-buyIncomeEl.onclick = () => {
-  if (score < incomeCost) return;
-
-  score -= incomeCost;
-  income++;
-  incomeCost = Math.floor(incomeCost * 1.7);
-
-  save();
-  updateUI();
-};
-
-/* ===== AUTO INCOME ===== */
-setInterval(() => {
-  score += income;
-  save();
-  updateUI();
-}, 1000);
-
-/* ===== ENERGY REGEN ===== */
-setInterval(() => {
-  if (energy < maxEnergy) {
-    energy++;
+    haptic();
     save();
     updateUI();
+  });
+
+  // ===== UPGRADE =====
+  upgradeEl.addEventListener("click", () => {
+    if (score < upgradeCost) return;
+
+    score -= upgradeCost;
+    power++;
+    upgradeCost = Math.floor(upgradeCost * 1.5);
+
+    haptic();
+    save();
+    updateUI();
+  });
+
+  // ===== INCOME =====
+  buyIncomeEl.addEventListener("click", () => {
+    if (score < incomeCost) return;
+
+    score -= incomeCost;
+    income++;
+    incomeCost = Math.floor(incomeCost * 1.6);
+
+    haptic();
+    save();
+    updateUI();
+  });
+
+  // ===== AUTO INCOME =====
+  setInterval(() => {
+    score += income;
+    save();
+    updateUI();
+  }, 1000);
+
+  // ===== ENERGY REGEN =====
+  setInterval(() => {
+    if (energy < maxEnergy) {
+      energy++;
+      save();
+      updateUI();
+    }
+  }, 3000);
+
+  // ===== DONATE (FAKE) =====
+  donateEl.addEventListener("click", () => {
+    haptic();
+    alert("Дякуємо за підтримку 💎\n(реальні донати — наступний етап)");
+  });
+
+  function save() {
+    localStorage.setItem("score", score);
+    localStorage.setItem("power", power);
+    localStorage.setItem("income", income);
+    localStorage.setItem("energy", energy);
+    localStorage.setItem("upgradeCost", upgradeCost);
+    localStorage.setItem("incomeCost", incomeCost);
   }
-}, 3000);
-
-/* ===== FAKE DONATE ===== */
-donateEl.onclick = () => {
-  score += 1000;
-  save();
-  updateUI();
-
-  if (tg) {
-    tg.showPopup({
-      title: "Дякуємо 💎",
-      message: "+1000 монет додано",
-      buttons: [{type:"ok"}]
-    });
-  } else {
-    alert("+1000 монет додано");
-  }
-};
-
-/* ===== SAVE ===== */
-function save() {
-  localStorage.setItem("score", score);
-  localStorage.setItem("power", power);
-  localStorage.setItem("income", income);
-  localStorage.setItem("energy", energy);
-  localStorage.setItem("tapCost", tapCost);
-  localStorage.setItem("incomeCost", incomeCost);
-}
-
-updateUI();
 </script>
 
 </body>
