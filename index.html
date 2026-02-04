@@ -18,7 +18,7 @@ body {
   height: 100vh;
 }
 
-h1 { margin-bottom: 15px; }
+h1 { margin-bottom: 10px; }
 
 #tap {
   width: 220px;
@@ -32,29 +32,31 @@ h1 { margin-bottom: 15px; }
   font-weight: bold;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.08s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
 #tap:active {
-  transform: scale(0.92);
+  transform: scale(0.9);
+  box-shadow: 0 0 30px rgba(255,152,0,0.8);
 }
 
 .stat {
-  margin-top: 8px;
-  font-size: 18px;
+  margin-top: 6px;
+  font-size: 16px;
 }
 
 .btn {
-  margin-top: 15px;
+  margin-top: 12px;
   padding: 14px 22px;
   border-radius: 12px;
   cursor: pointer;
   user-select: none;
-  font-size: 16px;
+  font-size: 15px;
 }
 
-.blue { background: #2196f3; }
-.green { background: #4caf50; }
+.blue { background:#2196f3; }
+.green { background:#4caf50; }
+.gold { background:#ff9800; }
 </style>
 </head>
 
@@ -71,104 +73,132 @@ h1 { margin-bottom: 15px; }
 
 <div id="upgrade" class="btn blue"></div>
 <div id="buyIncome" class="btn green"></div>
+<div id="daily" class="btn gold"></div>
 
 <script>
 // ===== TELEGRAM INIT =====
 const tg = window.Telegram?.WebApp;
-
 if (tg) {
   tg.ready();
   tg.expand();
 }
 
+// ===== USER (під бекенд) =====
+const user = tg?.initDataUnsafe?.user || {};
+const userId = user.id || "guest";
+const username = user.username || "guest";
+
+console.log("USER:", userId, username);
+
 // ===== STATE =====
 let score = +localStorage.getItem("score") || 0;
 let power = +localStorage.getItem("power") || 1;
 let income = +localStorage.getItem("income") || 0;
+let energy = +localStorage.getItem("energy");
+const maxEnergy = 100;
+if (isNaN(energy)) energy = maxEnergy;
 
 let upgradeCost = +localStorage.getItem("upgradeCost") || 20;
 let incomeCost = +localStorage.getItem("incomeCost") || 50;
 
-const maxEnergy = 100;
-let energy = +localStorage.getItem("energy");
-if (isNaN(energy)) energy = maxEnergy;
+let lastOnline = +localStorage.getItem("lastOnline") || Date.now();
+let lastDaily = +localStorage.getItem("lastDaily") || 0;
 
 // ===== ELEMENTS =====
 const tapEl = document.getElementById("tap");
 const scoreEl = document.getElementById("score");
-const powerEl = document.getElementById("power");
 const energyEl = document.getElementById("energy");
+const powerEl = document.getElementById("power");
 const incomeEl = document.getElementById("income");
 const upgradeEl = document.getElementById("upgrade");
 const buyIncomeEl = document.getElementById("buyIncome");
+const dailyEl = document.getElementById("daily");
 
 // ===== HAPTIC =====
-function vibrate(type = "light") {
+function vibrate(type="light") {
   try {
-    if (window.Telegram?.WebApp?.HapticFeedback) {
+    if (Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.impactOccurred(type);
     } else if (navigator.vibrate) {
-      navigator.vibrate(type === "light" ? 40 : 80);
+      navigator.vibrate(type==="light"?40:80);
     }
-  } catch (e) {}
+  } catch {}
 }
 
-// ===== SAVE / UI =====
+// ===== SAVE & UI =====
 function save() {
   localStorage.setItem("score", score);
   localStorage.setItem("power", power);
   localStorage.setItem("income", income);
+  localStorage.setItem("energy", energy);
   localStorage.setItem("upgradeCost", upgradeCost);
   localStorage.setItem("incomeCost", incomeCost);
-  localStorage.setItem("energy", energy);
+  localStorage.setItem("lastOnline", Date.now());
+  localStorage.setItem("lastDaily", lastDaily);
 }
 
 function updateUI() {
   scoreEl.textContent = score;
+  energyEl.textContent = energy;
   powerEl.textContent = power;
   incomeEl.textContent = income;
-  energyEl.textContent = energy;
 
   upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
-  buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
+  buyIncomeEl.textContent = `Дохід (+1 / сек) — ${incomeCost} 💰`;
+
+  const canDaily = Date.now() - lastDaily > 24*60*60*1000;
+  dailyEl.textContent = canDaily ? "🎁 Daily бонус (+100)" : "⏳ Daily завтра";
+  dailyEl.style.opacity = canDaily ? "1" : "0.5";
 }
 
 updateUI();
 
+// ===== OFFLINE INCOME =====
+const offlineSeconds = Math.floor((Date.now() - lastOnline)/1000);
+if (offlineSeconds > 5 && income > 0) {
+  const reward = offlineSeconds * income;
+  score += reward;
+  alert(`💤 Offline бонус: +${reward} монет`);
+}
+
 // ===== TAP =====
 tapEl.addEventListener("pointerdown", () => {
   if (energy <= 0) return;
-
   score += power;
   energy--;
-
   vibrate("light");
   save();
   updateUI();
 });
 
-// ===== UPGRADE POWER =====
+// ===== UPGRADE =====
 upgradeEl.addEventListener("pointerdown", () => {
   if (score < upgradeCost) return;
-
   score -= upgradeCost;
   power++;
   upgradeCost = Math.round(upgradeCost * 1.5);
-
   vibrate("medium");
   save();
   updateUI();
 });
 
-// ===== BUY INCOME =====
+// ===== INCOME =====
 buyIncomeEl.addEventListener("pointerdown", () => {
   if (score < incomeCost) return;
-
   score -= incomeCost;
   income++;
   incomeCost = Math.round(incomeCost * 1.6);
-
   vibrate("medium");
+  save();
+  updateUI();
+});
+
+// ===== DAILY =====
+dailyEl.addEventListener("pointerdown", () => {
+  if (Date.now() - lastDaily < 24*60*60*1000) return;
+  score += 100;
+  lastDaily = Date.now();
+  vibrate("heavy");
   save();
   updateUI();
 });
