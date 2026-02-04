@@ -1,79 +1,72 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>TapDay</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>TapDay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Telegram WebApp -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      background: #0f1220;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1a1f3c, #0f1220);
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
 
-    h1 { margin-bottom: 15px; }
+h1 { margin-bottom: 12px; }
 
-    #tap {
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff9800, #ff5722);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      cursor: pointer;
-      user-select: none;
-      transition: transform 0.1s;
-    }
+#tap {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease;
+}
 
-    #tap:active {
-      transform: scale(0.92);
-    }
+#tap:active { transform: scale(0.9); }
 
-    .stat {
-      margin-top: 8px;
-      font-size: 18px;
-    }
+.stat {
+  margin-top: 6px;
+  font-size: 17px;
+}
 
-    .btn {
-      margin-top: 14px;
-      padding: 14px 24px;
-      border-radius: 12px;
-      cursor: pointer;
-      user-select: none;
-      font-weight: bold;
-      text-align: center;
-      min-width: 260px;
-    }
+.btn {
+  margin-top: 12px;
+  padding: 14px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  text-align: center;
+  min-width: 260px;
+}
 
-    #upgrade {
-      background: #2196f3;
-    }
-
-    #buyIncome {
-      background: #4caf50;
-    }
-
-    #donate {
-      background: linear-gradient(135deg,#ffd700,#ff9800);
-      color: #000;
-    }
-  </style>
+.blue { background:#2196f3; }
+.green { background:#4caf50; }
+.gold {
+  background: linear-gradient(135deg,#ffd700,#ff9800);
+  color:#000;
+}
+</style>
 </head>
+
 <body>
 
-<h1>TapDay Game</h1>
+<h1>TapDay</h1>
 
 <div id="tap">TAP</div>
 
@@ -82,108 +75,126 @@
 <div class="stat" id="power">Сила тапу: 1</div>
 <div class="stat" id="income">Дохід: 0 / сек 💰</div>
 
-<div id="upgrade" class="btn"></div>
-<div id="buyIncome" class="btn"></div>
-<div id="donate" class="btn">⚡ Купити буст (⭐ 50)</div>
+<div id="upgrade" class="btn blue"></div>
+<div id="buyIncome" class="btn green"></div>
+<div id="donate" class="btn gold">⚡ Купити 1000 монет (⭐ 50)</div>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.ready();
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
-  let score = parseInt(localStorage.getItem("score")) || 0;
-  let power = parseInt(localStorage.getItem("power")) || 1;
-  let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
+// ===== STATE =====
+let score = +localStorage.getItem("score") || 0;
+let power = +localStorage.getItem("power") || 1;
+let income = +localStorage.getItem("income") || 0;
+let energy = +localStorage.getItem("energy");
+const maxEnergy = 100;
+if (isNaN(energy)) energy = maxEnergy;
 
-  let income = parseInt(localStorage.getItem("income")) || 0;
-  let incomeCost = parseInt(localStorage.getItem("incomeCost")) || 50;
+let upgradeCost = +localStorage.getItem("upgradeCost") || 20;
+let incomeCost = +localStorage.getItem("incomeCost") || 50;
 
-  let maxEnergy = 100;
-  let energy = parseInt(localStorage.getItem("energy"));
-  energy = isNaN(energy) ? maxEnergy : energy;
+// ===== ELEMENTS =====
+const tapEl = document.getElementById("tap");
+const scoreEl = document.getElementById("score");
+const energyEl = document.getElementById("energy");
+const powerEl = document.getElementById("power");
+const incomeEl = document.getElementById("income");
+const upgradeEl = document.getElementById("upgrade");
+const buyIncomeEl = document.getElementById("buyIncome");
+const donateEl = document.getElementById("donate");
 
-  const scoreEl = document.getElementById("score");
-  const energyEl = document.getElementById("energy");
-  const powerEl = document.getElementById("power");
-  const incomeEl = document.getElementById("income");
-  const tapEl = document.getElementById("tap");
-  const upgradeEl = document.getElementById("upgrade");
-  const buyIncomeEl = document.getElementById("buyIncome");
-  const donateEl = document.getElementById("donate");
+// ===== UI =====
+function save() {
+  localStorage.setItem("score", score);
+  localStorage.setItem("power", power);
+  localStorage.setItem("income", income);
+  localStorage.setItem("energy", energy);
+  localStorage.setItem("upgradeCost", upgradeCost);
+  localStorage.setItem("incomeCost", incomeCost);
+}
 
-  function updateUI() {
-    scoreEl.textContent = `Монети: ${score} 💰`;
-    energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
-    powerEl.textContent = `Сила тапу: ${power}`;
-    incomeEl.textContent = `Дохід: ${income} / сек 💰`;
+function updateUI() {
+  scoreEl.textContent = `Монети: ${score} 💰`;
+  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
+  powerEl.textContent = `Сила тапу: ${power}`;
+  incomeEl.textContent = `Дохід: ${income} / сек 💰`;
 
-    upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
-    buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
+  upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
+  buyIncomeEl.textContent = `Дохід (+1 / сек) — ${incomeCost} 💰`;
+}
 
-    localStorage.setItem("score", score);
-    localStorage.setItem("power", power);
-    localStorage.setItem("upgradeCost", upgradeCost);
-    localStorage.setItem("income", income);
-    localStorage.setItem("incomeCost", incomeCost);
-    localStorage.setItem("energy", energy);
-  }
+updateUI();
 
-  tapEl.addEventListener("pointerdown", () => {
-    if (energy <= 0) return;
+// ===== TAP =====
+tapEl.addEventListener("pointerdown", () => {
+  if (energy <= 0) return;
+  score += power;
+  energy--;
+  tg.HapticFeedback.impactOccurred("light");
+  save();
+  updateUI();
+});
 
-    score += power;
-    energy -= 1;
+// ===== UPGRADE =====
+upgradeEl.addEventListener("pointerdown", () => {
+  if (score < upgradeCost) return;
+  score -= upgradeCost;
+  power++;
+  upgradeCost = Math.round(upgradeCost * 1.5);
+  tg.HapticFeedback.impactOccurred("medium");
+  save();
+  updateUI();
+});
 
-    tg.HapticFeedback.impactOccurred("light");
+// ===== INCOME =====
+buyIncomeEl.addEventListener("pointerdown", () => {
+  if (score < incomeCost) return;
+  score -= incomeCost;
+  income++;
+  incomeCost = Math.round(incomeCost * 1.6);
+  tg.HapticFeedback.impactOccurred("medium");
+  save();
+  updateUI();
+});
 
-    updateUI();
-  });
-
-  upgradeEl.addEventListener("pointerdown", () => {
-    if (score < upgradeCost) return;
-
-    score -= upgradeCost;
-    power += 1;
-    upgradeCost = Math.floor(upgradeCost * 1.5);
-
-    tg.HapticFeedback.impactOccurred("medium");
-
-    updateUI();
-  });
-
-  buyIncomeEl.addEventListener("pointerdown", () => {
-    if (score < incomeCost) return;
-
-    score -= incomeCost;
-    income += 1;
-    incomeCost = Math.floor(incomeCost * 1.6);
-
-    tg.HapticFeedback.impactOccurred("medium");
-
-    updateUI();
-  });
-
-  // автодохід
-  setInterval(() => {
+// ===== AUTO INCOME =====
+setInterval(() => {
+  if (income > 0) {
     score += income;
+    save();
     updateUI();
-  }, 1000);
+  }
+}, 1000);
 
-  // відновлення енергії
-  setInterval(() => {
-    if (energy < maxEnergy) {
-      energy += 1;
+// ===== ENERGY REGEN =====
+setInterval(() => {
+  if (energy < maxEnergy) {
+    energy++;
+    save();
+    updateUI();
+  }
+}, 3000);
+
+// ===== FAKE DONATE =====
+donateEl.addEventListener("click", () => {
+  tg.showPopup({
+    title: "Підтвердження",
+    message: "Купити 1000 монет за ⭐ 50?",
+    buttons: [
+      { id: "buy", type: "default", text: "Купити" },
+      { type: "cancel" }
+    ]
+  }, (btnId) => {
+    if (btnId === "buy") {
+      score += 1000;
+      tg.HapticFeedback.notificationOccurred("success");
+      save();
       updateUI();
     }
-  }, 3000);
-
-  // донат (Stars)
-  donateEl.addEventListener("click", () => {
-    tg.openInvoice({
-      slug: "tapday_boost_1"
-    });
   });
-
-  updateUI();
+});
 </script>
 
 </body>
