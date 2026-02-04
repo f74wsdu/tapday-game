@@ -1,111 +1,179 @@
-const express = require("express");
-const TelegramBot = require("node-telegram-bot-api");
-
-const BOT_TOKEN = "ТУТ_ТОКЕН_БОТА";
-const PROVIDER_TOKEN = "ТУТ_PROVIDER_TOKEN_STRIPE";
-
-const app = express();
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-
-/* ---------- HTML ГРИ ---------- */
-const GAME_HTML = `
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>TapDay</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{
-  margin:0;
-  background:#0f1220;
-  color:white;
-  font-family:Arial;
+body {
+  margin: 0;
+  background: linear-gradient(180deg,#0b1020,#0f1530);
+  color: #fff;
+  font-family: Arial, sans-serif;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   height:100vh;
 }
-#tap{
-  width:200px;
-  height:200px;
+
+h1 { margin-bottom:20px; }
+
+#tap {
+  width:220px;
+  height:220px;
   border-radius:50%;
-  background:linear-gradient(135deg,#ff9800,#ff5722);
+  background: linear-gradient(135deg,#ff9800,#ff5722);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:32px;
-}
-.btn{
-  margin-top:15px;
-  padding:14px 22px;
-  border-radius:12px;
+  font-size:36px;
+  font-weight:bold;
   cursor:pointer;
+  user-select:none;
+  transition:transform .1s, box-shadow .1s;
 }
-#donate{background:#00c853;}
+
+#tap:active {
+  transform: scale(0.95);
+  box-shadow:0 0 40px rgba(255,150,0,.8);
+}
+
+.stat {
+  margin-top:10px;
+  font-size:18px;
+}
+
+.btn {
+  margin-top:15px;
+  padding:14px 24px;
+  border-radius:14px;
+  font-size:18px;
+  cursor:pointer;
+  user-select:none;
+  text-align:center;
+}
+
+.blue { background:#2196f3; }
+.green { background:#4caf50; }
+.donate { background:linear-gradient(135deg,#00c853,#64dd17); }
+
 </style>
 </head>
 <body>
 
-<h2>TapDay 💰</h2>
+<h1>TapDay</h1>
+
 <div id="tap">TAP</div>
-<div id="score">0</div>
-<div id="donate" class="btn">💎 Підтримати гру</div>
+
+<div class="stat" id="score">0 💰</div>
+<div class="stat" id="energy">Енергія: 100 / 100 ⚡</div>
+<div class="stat" id="power">Сила тапу: 1</div>
+<div class="stat" id="income">Дохід: 0 / сек 💰</div>
+
+<div class="btn blue" id="upgradeBtn"></div>
+<div class="btn green" id="incomeBtn"></div>
+<div class="btn donate" id="donateBtn">💎 Підтримати гру (Donate)</div>
 
 <script>
-let score = Number(localStorage.getItem("score")) || 0;
+/* === TELEGRAM INIT === */
+if (window.Telegram?.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+}
+
+/* === LOAD === */
+let score = +localStorage.getItem("score") || 0;
+let power = +localStorage.getItem("power") || 1;
+let income = +localStorage.getItem("income") || 0;
+let energy = +localStorage.getItem("energy") || 100;
+
+let upgradeCost = +localStorage.getItem("upgradeCost") || 20;
+let incomeCost = +localStorage.getItem("incomeCost") || 50;
+
+const maxEnergy = 100;
+
+/* === ELEMENTS === */
+const tap = document.getElementById("tap");
 const scoreEl = document.getElementById("score");
-scoreEl.textContent = score;
+const energyEl = document.getElementById("energy");
+const powerEl = document.getElementById("power");
+const incomeEl = document.getElementById("income");
+const upgradeBtn = document.getElementById("upgradeBtn");
+const incomeBtn = document.getElementById("incomeBtn");
 
-tap.onclick = () => {
-  score++;
+/* === UI === */
+function updateUI() {
+  scoreEl.textContent = score + " 💰";
+  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
+  powerEl.textContent = `Сила тапу: ${power}`;
+  incomeEl.textContent = `Дохід: ${income} / сек 💰`;
+
+  upgradeBtn.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
+  incomeBtn.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
+
   localStorage.setItem("score", score);
-  scoreEl.textContent = score;
+  localStorage.setItem("power", power);
+  localStorage.setItem("income", income);
+  localStorage.setItem("energy", energy);
+  localStorage.setItem("upgradeCost", upgradeCost);
+  localStorage.setItem("incomeCost", incomeCost);
+}
 
-  if (window.Telegram?.WebApp) {
+/* === TAP === */
+tap.addEventListener("click", () => {
+  if (energy <= 0) return;
+
+  score += power;
+  energy--;
+
+  if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred("light");
   }
+
+  updateUI();
+});
+
+/* === UPGRADE POWER === */
+upgradeBtn.onclick = () => {
+  if (score < upgradeCost) return;
+  score -= upgradeCost;
+  power++;
+  upgradeCost = Math.floor(upgradeCost * 1.35);
+  updateUI();
 };
 
-donate.onclick = () => {
-  Telegram.WebApp.openTelegramLink(
-    "https://t.me/ТВІЙ_БОТ?start=donate"
-  );
+/* === BUY INCOME === */
+incomeBtn.onclick = () => {
+  if (score < incomeCost) return;
+  score -= incomeCost;
+  income++;
+  incomeCost = Math.floor(incomeCost * 1.4);
+  updateUI();
 };
+
+/* === AUTO INCOME === */
+setInterval(() => {
+  score += income;
+  updateUI();
+}, 1000);
+
+/* === ENERGY REGEN === */
+setInterval(() => {
+  if (energy < maxEnergy) {
+    energy++;
+    updateUI();
+  }
+}, 3000);
+
+/* === FAKE DONATE === */
+document.getElementById("donateBtn").onclick = () => {
+  alert("💎 Donate\n(наступний етап — реальні платежі через Telegram)");
+};
+
+updateUI();
 </script>
 
 </body>
 </html>
-`;
-
-/* ---------- WEBAPP ---------- */
-app.get("/", (req, res) => {
-  res.send(GAME_HTML);
-});
-
-/* ---------- TELEGRAM PAYMENTS ---------- */
-bot.onText(/\/start donate/, (msg) => {
-  bot.sendInvoice(
-    msg.chat.id,
-    "TapDay 💎",
-    "100 монет у грі",
-    "tapday_payload",
-    PROVIDER_TOKEN,
-    "UAH",
-    [{ label: "100 монет", amount: 5000 }]
-  );
-});
-
-bot.on("pre_checkout_query", q => {
-  bot.answerPreCheckoutQuery(q.id, true);
-});
-
-bot.on("successful_payment", msg => {
-  console.log("💰 ОПЛАТА УСПІШНА:", msg.successful_payment);
-});
-
-/* ---------- START ---------- */
-app.listen(3000, () => {
-  console.log("🚀 TapDay запущено на http://localhost:3000");
-});
