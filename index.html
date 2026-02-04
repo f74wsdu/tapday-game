@@ -1,148 +1,168 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>TapDay</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      margin: 0;
-      background: #0f1220;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 { margin-bottom: 10px; }
-    #tap {
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #ff9800, #ff5722);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      cursor: pointer;
-      user-select: none;
-    }
-    #score {
-      margin-top: 20px;
-      font-size: 24px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>TapDay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  background: #0f1220;
+  color: white;
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+h1 { margin-bottom: 10px; }
+
+#tap {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s;
+}
+
+#tap:active {
+  transform: scale(0.95);
+}
+
+.stat {
+  margin-top: 8px;
+  font-size: 18px;
+}
+
+.btn {
+  margin-top: 15px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+#upgrade { background:#2196f3; }
+#buyIncome { background:#4caf50; }
+</style>
 </head>
+
 <body>
 
 <h1>TapDay Game</h1>
+
 <div id="tap">TAP</div>
-<div id="score">0</div>
 
-<div id="energy" style="margin-top:10px;font-size:18px;">
-  Енергія: 100 / 100 ⚡
-</div>
-  <div id="power" style="margin-top:10px;font-size:18px;">
-  Сила тапу: 1
-</div>
-  <div id="income" style="margin-top:10px;font-size:18px;">
-  Дохід: 0 / сек 💰
-</div>
+<div id="score" class="stat">0 💰</div>
+<div id="energy" class="stat">Енергія: 100 / 100 ⚡</div>
+<div id="power" class="stat">Сила тапу: 1</div>
+<div id="income" class="stat">Дохід: 0 / сек 💰</div>
 
-<div id="buyIncome" style="
-  margin-top:15px;
-  padding:12px 20px;
-  background:#4caf50;
-  border-radius:10px;
-  cursor:pointer;
-  user-select:none;
-">
-  Купити дохід (+1 / сек) — 50 💰
-</div>
-  <div id="upgrade" style="
-  margin-top:20px;
-  padding:12px 20px;
-  background:#2196f3;
-  border-radius:10px;
-  cursor:pointer;
-  user-select:none;
-">
-  upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
+<div id="upgrade" class="btn"></div>
+<div id="buyIncome" class="btn"></div>
 
 <script>
-  let power = parseInt(localStorage.getItem("power")) || 1;
+// ===== STATE =====
+let score = parseInt(localStorage.getItem("score")) || 0;
+
+let power = parseInt(localStorage.getItem("power")) || 1;
 let upgradeCost = parseInt(localStorage.getItem("upgradeCost")) || 20;
 
-  let maxEnergy = 100;
-  let energy = parseInt(localStorage.getItem("energy"));
-  energy = isNaN(energy) ? maxEnergy : energy;
+let income = parseInt(localStorage.getItem("income")) || 0;
+let incomeCost = parseInt(localStorage.getItem("incomeCost")) || 50;
 
-  const scoreEl = document.getElementById("score");
-  const powerEl = document.getElementById("power");
-  const energyEl = document.getElementById("energy");
-  const tapEl = document.getElementById("tap");
-  const upgradeEl = document.getElementById("upgrade");
+let maxEnergy = 100;
+let energy = parseInt(localStorage.getItem("energy"));
+energy = isNaN(energy) ? maxEnergy : energy;
 
-  function updateUI() {
-    scoreEl.textContent = score;
-    powerEl.textContent = "Сила тапу: " + power;
-    energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
-  }
-
-  updateUI();
-
-  tapEl.addEventListener("pointerdown", () => {
-    if (energy <= 0) return;
-
-    score += power;
-    energy -= 1;
-
-    localStorage.setItem("score", score);
-    localStorage.setItem("energy", energy);
-    updateUI();
-  });
-
-  upgradeEl.aEventListener("pointerdown", () => {
-    if (score >= 20) {
-      score -= 20;
-      power += 1;
-
-      localStorage.setItem("score", score);
-      localStorage.setItem("power", power);
-      updateUI();
-    }
-  });
-
-  // ⚡ Відновлення енергії
-  setInterval(() => {
-    if (energy < maxEnergy) {
-      energy += 1;
-      localStorage.setItem("energy", energy);
-      updateUI();
-    }
-  }, 3000);
-</script>
-
-</body>
-<script>
-let score = 0;
-let power = 1;
-let energy = 100;
-
-const scoreEl = document.getElementById("score");
+// ===== ELEMENTS =====
 const tapEl = document.getElementById("tap");
+const scoreEl = document.getElementById("score");
+const energyEl = document.getElementById("energy");
+const powerEl = document.getElementById("power");
+const incomeEl = document.getElementById("income");
+const upgradeEl = document.getElementById("upgrade");
+const buyIncomeEl = document.getElementById("buyIncome");
 
-scoreEl.textContent = score;
+// ===== UI =====
+function updateUI() {
+  scoreEl.textContent = score + " 💰";
+  energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
+  powerEl.textContent = `Сила тапу: ${power}`;
+  incomeEl.textContent = `Дохід: ${income} / сек 💰`;
 
-tapEl.addEventListener("click", () => {
+  upgradeEl.textContent = `Upgrade (+1 сила) — ${upgradeCost} 💰`;
+  buyIncomeEl.textContent = `Купити дохід (+1 / сек) — ${incomeCost} 💰`;
+}
+
+// ===== SAVE =====
+function save() {
+  localStorage.setItem("score", score);
+  localStorage.setItem("power", power);
+  localStorage.setItem("upgradeCost", upgradeCost);
+  localStorage.setItem("income", income);
+  localStorage.setItem("incomeCost", incomeCost);
+  localStorage.setItem("energy", energy);
+}
+
+// ===== TAP =====
+tapEl.addEventListener("pointerdown", () => {
   if (energy <= 0) return;
 
   score += power;
   energy--;
 
-  scoreEl.textContent = score;
+  navigator.vibrate?.(10);
+
+  save();
+  updateUI();
 });
+
+// ===== UPGRADE POWER =====
+upgradeEl.addEventListener("pointerdown", () => {
+  if (score < upgradeCost) return;
+
+  score -= upgradeCost;
+  power++;
+  upgradeCost = Math.floor(upgradeCost * 1.6);
+
+  save();
+  updateUI();
+});
+
+// ===== BUY INCOME =====
+buyIncomeEl.addEventListener("pointerdown", () => {
+  if (score < incomeCost) return;
+
+  score -= incomeCost;
+  income++;
+  incomeCost = Math.floor(incomeCost * 1.7);
+
+  save();
+  updateUI();
+});
+
+// ===== TICK =====
+setInterval(() => {
+  score += income;
+  energy = Math.min(maxEnergy, energy + 1);
+
+  save();
+  updateUI();
+}, 1000);
+
+// INIT
+updateUI();
 </script>
+
+</body>
 </html>
