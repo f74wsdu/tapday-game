@@ -41,7 +41,10 @@
 <div id="tap">TAP</div>
 <div id="score">0</div>
 
-<div id="power" style="margin-top:10px;font-size:18px;">
+<div id="energy" style="margin-top:10px;font-size:18px;">
+  Енергія: 100 / 100 ⚡
+</div>
+  <div id="power" style="margin-top:10px;font-size:18px;">
   Сила тапу: 1
 </div>
   <div id="upgrade" style="
@@ -56,24 +59,36 @@
 </div>
 
 <script>
-  let score = localStorage.getItem("score");
-  score = score ? parseInt(score) : 0;
+  let score = parseInt(localStorage.getItem("score")) || 0;
+  let power = parseInt(localStorage.getItem("power")) || 1;
 
-  let power = localStorage.getItem("power");
-  power = power ? parseInt(power) : 1;
+  let maxEnergy = 100;
+  let energy = parseInt(localStorage.getItem("energy"));
+  energy = isNaN(energy) ? maxEnergy : energy;
 
   const scoreEl = document.getElementById("score");
   const powerEl = document.getElementById("power");
+  const energyEl = document.getElementById("energy");
   const tapEl = document.getElementById("tap");
   const upgradeEl = document.getElementById("upgrade");
 
-  scoreEl.textContent = score;
-  powerEl.textContent = "Сила тапу: " + power;
+  function updateUI() {
+    scoreEl.textContent = score;
+    powerEl.textContent = "Сила тапу: " + power;
+    energyEl.textContent = `Енергія: ${energy} / ${maxEnergy} ⚡`;
+  }
+
+  updateUI();
 
   tapEl.addEventListener("pointerdown", () => {
+    if (energy <= 0) return;
+
     score += power;
-    scoreEl.textContent = score;
+    energy -= 1;
+
     localStorage.setItem("score", score);
+    localStorage.setItem("energy", energy);
+    updateUI();
   });
 
   upgradeEl.addEventListener("pointerdown", () => {
@@ -81,16 +96,20 @@
       score -= 20;
       power += 1;
 
-      scoreEl.textContent = score;
-      powerEl.textContent = "Сила тапу: " + power;
-      upgradeEl.textContent = `Upgrade (+${power}) — 20 💰`;
-
       localStorage.setItem("score", score);
       localStorage.setItem("power", power);
+      updateUI();
     }
   });
 
-  upgradeEl.textContent = `Upgrade (+${power}) — 20 💰`;
+  // ⚡ Відновлення енергії
+  setInterval(() => {
+    if (energy < maxEnergy) {
+      energy += 1;
+      localStorage.setItem("energy", energy);
+      updateUI();
+    }
+  }, 3000);
 </script>
 
 </body>
