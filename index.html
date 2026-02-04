@@ -42,20 +42,19 @@
 <div id="score">0</div>
 
 <script>
-  let coins = localStorage.getItem("coins")
-    ? parseInt(localStorage.getItem("coins"))
-    : 0;
+  let score = localStorage.getItem("score");
+  score = score ? parseInt(score) : 0;
 
-  const countEl = document.getElementById("count");
-  const tap = document.getElementById("tap");
+  const scoreEl = document.getElementById("score");
+  scoreEl.textContent = score;
 
-  countEl.innerText = coins;
+  const tapBtn = document.getElementById("tap");
 
-  tap.onclick = () => {
-    coins += 1;
-    countEl.innerText = coins;
-    localStorage.setItem("coins", coins);
-  };
+  tapBtn.addEventListener("click", () => {
+    score++;
+    scoreEl.textContent = score;
+    localStorage.setItem("score", score);
+  });
 </script>
 
 </body>
